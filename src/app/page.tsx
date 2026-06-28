@@ -114,8 +114,10 @@ export default function PomodoroTimer() {
   const progress = ((total - secondsLeft) / total) * 100;
 
   const isWork = mode === "work";
-  const bgColor = isWork ? "#1a1a2e" : "#0f2027";
-  const accentColor = isWork ? "#e94560" : "#4ecca3";
+  const bgColor = isWork ? "#eef6ec" : "#e6f2ed";
+  const accentColor = isWork ? "#7fb583" : "#6fb8a3";
+  const textColor = "#4a5d4a";
+  const subTextColor = "#8a9a8a";
 
   return (
     <div style={{
@@ -126,20 +128,20 @@ export default function PomodoroTimer() {
       alignItems: "center",
       justifyContent: "center",
       fontFamily: "'Segoe UI', sans-serif",
-      color: "#fff",
+      color: textColor,
       transition: "background-color 0.8s ease",
     }}>
       <div style={{ fontSize: "1.1rem", letterSpacing: "0.2em", color: accentColor, marginBottom: "0.5rem", fontWeight: 600 }}>
-        {isWork ? "🍅 作業中" : "☕ 休憩中"}
+        {isWork ? "🌱 作業中" : "🍵 休憩中"}
       </div>
 
-      <div style={{ fontSize: "0.9rem", color: "#aaa", marginBottom: "2.5rem" }}>
-        今日の完了セッション: <strong style={{ color: "#fff" }}>{sessions}</strong> 回
+      <div style={{ fontSize: "0.9rem", color: subTextColor, marginBottom: "2.5rem" }}>
+        今日の完了セッション: <strong style={{ color: textColor }}>{sessions}</strong> 回
       </div>
 
       <div style={{ position: "relative", width: 240, height: 240, marginBottom: "2.5rem" }}>
         <svg width={240} height={240} style={{ transform: "rotate(-90deg)" }}>
-          <circle cx={120} cy={120} r={108} fill="none" stroke="#333" strokeWidth={10} />
+          <circle cx={120} cy={120} r={108} fill="none" stroke="#d8e8d6" strokeWidth={10} />
           <circle
             cx={120} cy={120} r={108} fill="none"
             stroke={accentColor} strokeWidth={10}
@@ -168,6 +170,7 @@ export default function PomodoroTimer() {
             padding: "0.8rem 2.5rem", fontSize: "1.1rem", borderRadius: "2rem",
             border: "none", cursor: "pointer", fontWeight: 700,
             backgroundColor: accentColor, color: "#fff",
+            boxShadow: "0 4px 12px rgba(127, 181, 131, 0.3)",
           }}
         >
           {running ? "一時停止" : "スタート"}
@@ -176,8 +179,8 @@ export default function PomodoroTimer() {
           onClick={reset}
           style={{
             padding: "0.8rem 1.5rem", fontSize: "1rem", borderRadius: "2rem",
-            border: "2px solid #555", cursor: "pointer", fontWeight: 600,
-            backgroundColor: "transparent", color: "#ccc",
+            border: `2px solid ${accentColor}`, cursor: "pointer", fontWeight: 600,
+            backgroundColor: "transparent", color: accentColor,
           }}
         >
           リセット
@@ -186,42 +189,43 @@ export default function PomodoroTimer() {
 
       <button
         onClick={() => switchMode(isWork ? "break" : "work", workMinutes, breakMinutes)}
-        style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: "0.85rem", marginBottom: "2rem" }}
+        style={{ background: "none", border: "none", color: subTextColor, cursor: "pointer", fontSize: "0.85rem", marginBottom: "2rem" }}
       >
         {isWork ? "→ 休憩へスキップ" : "→ 作業へスキップ"}
       </button>
 
       <button
         onClick={() => { setTempWork(workMinutes); setTempBreak(breakMinutes); setShowSettings(true); }}
-        style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: "0.85rem" }}
+        style={{ background: "none", border: "none", color: subTextColor, cursor: "pointer", fontSize: "0.85rem" }}
       >
         ⚙️ 時間を設定
       </button>
 
       {showSettings && (
         <div style={{
-          position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)",
+          position: "fixed", inset: 0, backgroundColor: "rgba(74, 93, 74, 0.35)",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{
-            backgroundColor: "#1e1e2e", borderRadius: "1rem", padding: "2rem",
+            backgroundColor: "#ffffff", borderRadius: "1.2rem", padding: "2rem",
             width: 300, display: "flex", flexDirection: "column", gap: "1.2rem",
+            boxShadow: "0 8px 30px rgba(74, 93, 74, 0.2)",
           }}>
-            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>時間の設定</h2>
+            <h2 style={{ margin: 0, fontSize: "1.1rem", color: textColor }}>時間の設定</h2>
             <label style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              <span style={{ color: "#aaa", fontSize: "0.85rem" }}>作業時間（分）</span>
+              <span style={{ color: subTextColor, fontSize: "0.85rem" }}>作業時間（分）</span>
               <input
                 type="number" min={1} max={99} value={tempWork}
                 onChange={(e) => setTempWork(Number(e.target.value))}
-                style={{ padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #555", backgroundColor: "#111", color: "#fff", fontSize: "1rem" }}
+                style={{ padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #cfe0cd", backgroundColor: "#f7faf6", color: textColor, fontSize: "1rem" }}
               />
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              <span style={{ color: "#aaa", fontSize: "0.85rem" }}>休憩時間（分）</span>
+              <span style={{ color: subTextColor, fontSize: "0.85rem" }}>休憩時間（分）</span>
               <input
                 type="number" min={1} max={99} value={tempBreak}
                 onChange={(e) => setTempBreak(Number(e.target.value))}
-                style={{ padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #555", backgroundColor: "#111", color: "#fff", fontSize: "1rem" }}
+                style={{ padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #cfe0cd", backgroundColor: "#f7faf6", color: textColor, fontSize: "1rem" }}
               />
             </label>
             <div style={{ display: "flex", gap: "0.8rem" }}>
@@ -233,7 +237,7 @@ export default function PomodoroTimer() {
               </button>
               <button
                 onClick={() => setShowSettings(false)}
-                style={{ flex: 1, padding: "0.7rem", borderRadius: "0.5rem", border: "1px solid #555", backgroundColor: "transparent", color: "#ccc", cursor: "pointer" }}
+                style={{ flex: 1, padding: "0.7rem", borderRadius: "0.5rem", border: "1px solid #cfe0cd", backgroundColor: "transparent", color: subTextColor, cursor: "pointer" }}
               >
                 キャンセル
               </button>
