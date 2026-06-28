@@ -38,6 +38,30 @@ export default function PomodoroTimer() {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const endTimeRef = useRef<number | null>(null);
+  const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
+
+  const acquireWakeLock = useCallback(async () => {
+    try {
+      const nav = navigator as Navigator & {
+        wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> };
+      };
+      if (nav.wakeLock) {
+        wakeLockRef.current = await nav.wakeLock.request("screen");
+      }
+    } catch {
+      // 端末が非対応／許可されない場合は無視（時刻ベース計算でズレは防げる）
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    try {
+      await wakeLockRef.current?.release();
+    } catch {
+      // ignore
+    }
+    wakeLockRef.current = null;
+  }, []);
 
   useEffect(() => {
     const savedDate = localStorage.getItem("pomodoro-sessions-date");
@@ -78,20 +102,38 @@ export default function PomodoroTimer() {
   }, [mode, workMinutes, breakMinutes, getAudioCtx, switchMode]);
 
   useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => {
-        setSecondsLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(intervalRef.current!);
-            handleFinish();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(intervalRef.current!);
-  }, [running, handleFinish]);
+    if (!running) return;
+
+    // 経過時間は「終了予定時刻 − 現在時刻」で計算する。
+    // こうすると画面ロックでタイマーが一時停止しても、復帰時に正しい残り時間に戻る。
+    const tick = () => {
+      const remaining = Math.max(0, Math.round((endTimeRef.current! - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(intervalRef.current!);
+        handleFinish();
+      }
+    };
+
+    acquireWakeLock();
+    tick();
+    intervalRef.current = setInterval(tick, 250);
+
+    // 画面復帰時に即座に再計算し、画面ロックも取り直す
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        tick();
+        acquireWakeLock();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      clearInterval(intervalRef.current!);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      releaseWakeLock();
+    };
+  }, [running, handleFinish, acquireWakeLock, releaseWakeLock]);
 
   const reset = () => {
     clearInterval(intervalRef.current!);
@@ -164,7 +206,14 @@ export default function PomodoroTimer() {
         <button
           onClick={() => {
             getAudioCtx();
-            setRunning((r) => !r);
+            setRunning((r) => {
+              const next = !r;
+              if (next) {
+                // スタート／再開時に終了予定時刻を記録
+                endTimeRef.current = Date.now() + secondsLeft * 1000;
+              }
+              return next;
+            });
           }}
           style={{
             padding: "0.8rem 2.5rem", fontSize: "1.1rem", borderRadius: "2rem",
