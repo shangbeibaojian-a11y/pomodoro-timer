@@ -21,8 +21,18 @@ function playBeep(ctx: AudioContext, frequency: number, duration: number) {
 }
 
 function playNotification(ctx: AudioContext) {
-  playBeep(ctx, 880, 0.3);
-  setTimeout(() => playBeep(ctx, 660, 0.5), 350);
+  // 「ピンポーン」を3回繰り返して気づきやすくする
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => playBeep(ctx, 880, 0.3), i * 1200);
+    setTimeout(() => playBeep(ctx, 660, 0.5), i * 1200 + 350);
+  }
+}
+
+function vibrate() {
+  // Android のブラウザで動作（iPhone は非対応）
+  if ("vibrate" in navigator) {
+    navigator.vibrate([600, 200, 600, 200, 600]);
+  }
 }
 
 export default function PomodoroTimer() {
@@ -89,6 +99,7 @@ export default function PomodoroTimer() {
 
   const handleFinish = useCallback(() => {
     playNotification(getAudioCtx());
+    vibrate();
     if (mode === "work") {
       setSessions((prev) => {
         const next = prev + 1;
