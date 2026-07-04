@@ -34,8 +34,9 @@ function playNotification(ctx: AudioContext) {
 
 function vibrate() {
   // Android のブラウザで動作（iPhone は非対応）
+  // 長め×3回でしっかり気づける振動にする
   if ("vibrate" in navigator) {
-    navigator.vibrate([600, 200, 600, 200, 600]);
+    navigator.vibrate([1500, 400, 1500, 400, 1500]);
   }
 }
 
