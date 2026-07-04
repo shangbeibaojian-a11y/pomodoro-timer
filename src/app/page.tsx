@@ -21,6 +21,10 @@ function playBeep(ctx: AudioContext, frequency: number, duration: number) {
 }
 
 function playNotification(ctx: AudioContext) {
+  // 一時停止状態なら再開してから鳴らす（スマホで音が出なくなる対策）
+  if (ctx.state === "suspended") {
+    ctx.resume();
+  }
   // 「ピンポーン」を3回繰り返して気づきやすくする
   for (let i = 0; i < 3; i++) {
     setTimeout(() => playBeep(ctx, 880, 0.3), i * 1200);
@@ -88,8 +92,24 @@ export default function PomodoroTimer() {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new AudioContext();
     }
+    if (audioCtxRef.current.state === "suspended") {
+      audioCtxRef.current.resume();
+    }
     return audioCtxRef.current;
   }, []);
+
+  // スタートボタンを押した瞬間に無音を一度鳴らして、
+  // スマホのブラウザに「このページは音を出してよい」と認識させる
+  const unlockAudio = useCallback(() => {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  }, [getAudioCtx]);
 
   const switchMode = useCallback((nextMode: Mode, wMin: number, bMin: number) => {
     setMode(nextMode);
@@ -133,6 +153,9 @@ export default function PomodoroTimer() {
     // 画面復帰時に即座に再計算し、画面ロックも取り直す
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") {
+        if (audioCtxRef.current?.state === "suspended") {
+          audioCtxRef.current.resume();
+        }
         tick();
         acquireWakeLock();
       }
@@ -216,7 +239,7 @@ export default function PomodoroTimer() {
       <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
         <button
           onClick={() => {
-            getAudioCtx();
+            unlockAudio();
             setRunning((r) => {
               const next = !r;
               if (next) {
